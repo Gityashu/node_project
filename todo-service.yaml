@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-app-service
+spec:
+  selector:
+    app: todo-app # Selects pods with the label 'app: todo-app' (from your deployment)
+  ports:
+    - protocol: TCP
+      port: 80 # The port the service will expose (e.g., you access via minikube-ip:NODEPORT)
+      targetPort: 3000 # The port on the pod where your app is running (matches containerPort)
+  type: NodePort # Makes the service accessible from outside the cluster on a specific NodePort

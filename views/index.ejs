@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Simple Todo App</title>
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>My Todo List</h1>
+
+        <form action="/add" method="POST" class="add-todo-form">
+            <input type="text" name="task" placeholder="Add a new todo..." required>
+            <button type="submit">Add Todo</button>
+        </form>
+
+        <ul class="todo-list">
+            <% if (todos.length === 0) { %>
+                <li class="no-todos">No todos yet! Add some above.</li>
+            <% } %>
+
+            <% todos.forEach(function(todo) { %>
+                <li class="<%= todo.completed ? 'completed' : '' %>">
+                    <form action="/complete" method="POST" class="inline-form">
+                        <input type="hidden" name="id" value="<%= todo.id %>">
+                        <input type="checkbox" onchange="this.form.submit()" <%= todo.completed ? 'checked' : '' %>>
+                    </form>
+                    <span><%= todo.task %></span>
+                    <form action="/delete" method="POST" class="inline-form delete-form">
+                        <input type="hidden" name="id" value="<%= todo.id %>">
+                        <button type="submit">Delete</button>
+                    </form>
+                </li>
+            <% }); %>
+        </ul>
+    </div>
+</body>
+</html>

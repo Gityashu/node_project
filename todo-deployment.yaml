@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-app-deployment
+spec:
+  replicas: 1 # Number of instances (pods) to run
+  selector:
+    matchLabels:
+      app: todo-app # Label to select pods for this deployment
+  template:
+    metadata:
+      labels:
+        app: todo-app # Labels applied to the pods
+    spec:
+      containers:
+      - name: todo-app-container
+        image: docker.io/nyr24/todo-pr:latest # The name of the Docker image we built
+        imagePullPolicy: IfNotPresent # VERY IMPORTANT for local Minikube images
+        ports:
+        - containerPort: 3000 # The port your Node.js app listens on inside the container
