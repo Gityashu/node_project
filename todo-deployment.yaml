@@ -1,9 +1,11 @@
+#
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: todo-app-deployment
+  #namespace: todo-app-namespace 
 spec:
-  replicas: 1 # Number of instances (pods) to run
+  replicas: 2 # Number of instances (pods) to run
   selector:
     matchLabels:
       app: todo-app # Label to select pods for this deployment
