@@ -36,6 +36,10 @@ pipeline {
         }
         
         stage('2. Build Application') {
+
+            tools {
+        nodejs "node18"
+    }
             steps {
                 echo "========== Building Node.js Application =========="
                 sh '''
