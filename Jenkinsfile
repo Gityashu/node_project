@@ -1,5 +1,10 @@
 pipeline {
     agent any
+    docker {
+            image 'docker:26-dind'
+            args '--privileged -v /var/run/docker.sock:/var/run/docker.sock -u root'
+            reuseNode true
+        }
     
     environment {
         DOCKER_REGISTRY = "docker.io"
@@ -93,6 +98,15 @@ pipeline {
             }
         }
         
+        stage('5.5. Update K8s Manifests') {
+           steps {
+             sh '''
+              sed -i 's|nyr24/node_project:.*|nyr24/node_project:${IMAGE_TAG}|g' k8s-deployment.yaml
+              echo "✓ Updated image tag in k8s-deployment.yaml"
+                '''
+    }
+}
+
         stage('6. Deploy to EKS') {
             steps {
                 echo "========== Deploying to EKS Cluster =========="

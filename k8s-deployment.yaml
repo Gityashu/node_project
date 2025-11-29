@@ -58,7 +58,7 @@ spec:
 
       containers:
       - name: node-app
-        image: gityashu/node_project:latest
+        image: nyr24/node_project:latest
         imagePullPolicy: Always
         
         ports:
