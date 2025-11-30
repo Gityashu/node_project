@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         DOCKER_REGISTRY = "docker.io"
-        DOCKER_REGISTRY_CREDENTIALS = "docker-hub-credentials"
+        DOCKER_REGISTRY_CREDENTIALS = "docker-secrets"
         DOCKER_USERNAME = "nyr24"
         IMAGE_NAME = "${DOCKER_USERNAME}/node_project"
         IMAGE_TAG = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
