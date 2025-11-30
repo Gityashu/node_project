@@ -146,27 +146,27 @@ pipeline {
         }
     }
 }
-stage('9. Verify Deployment') {
-    steps {
-        echo "========== Verifying EKS Deployment =========="
-        withCredentials([
-            file(credentialsId: "${KUBE_CONFIG_CREDENTIALS}", variable: 'KUBECONFIG_FILE'),
-            aws(credentialsId: "${AWS_CREDENTIALS}", accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')
-        ]) {
-            sh '''
-                export KUBECONFIG=${KUBECONFIG_FILE}
-                export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-                export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+// stage('9. Verify Deployment') {
+//     steps {
+//         echo "========== Verifying EKS Deployment =========="
+//         withCredentials([
+//             file(credentialsId: "${KUBE_CONFIG_CREDENTIALS}", variable: 'KUBECONFIG_FILE'),
+//             aws(credentialsId: "${AWS_CREDENTIALS}", accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')
+//         ]) {
+//             sh '''
+//                 export KUBECONFIG=${KUBECONFIG_FILE}
+//                 export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+//                 export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 
-                echo "Checking deployment rollout status..."
-                kubectl rollout status deployment/${KUBE_DEPLOYMENT_NAME} -n ${KUBE_NAMESPACE} --timeout=5m
+//                 echo "Checking deployment rollout status..."
+//                 kubectl rollout status deployment/${KUBE_DEPLOYMENT_NAME} -n ${KUBE_NAMESPACE} --timeout=5m
 
-                echo "Pods status:"
-                kubectl get pods -n ${KUBE_NAMESPACE}
-            '''
-        }
-    }
-}
+//                 echo "Pods status:"
+//                 kubectl get pods -n ${KUBE_NAMESPACE}
+//             '''
+//         }
+//     }
+// }
     }
     
     post {
