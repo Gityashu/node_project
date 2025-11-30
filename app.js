@@ -7,6 +7,7 @@ const port = 3000; // The port your Express app will listen on
 
 // Use body-parser to parse URL-encoded bodies (for form data)
 app.use(bodyParser.urlencoded({ extended: true }));
+app.get('/health', (req, res) => res.status(200).json({status: 'ok'}));
 
 // Set EJS as the view engine
 app.set('view engine', 'ejs');
