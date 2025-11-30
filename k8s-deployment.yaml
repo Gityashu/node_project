@@ -58,7 +58,7 @@ spec:
 
       containers:
       - name: node-app
-        image: nyr24/node_project:latest
+        image: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/node_project:latest
         imagePullPolicy: Always
         
         ports:

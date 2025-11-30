@@ -1,18 +1,25 @@
 pipeline {
     agent any
+    
     environment {
-        DOCKER_REGISTRY = "docker.io"
-        DOCKER_REGISTRY_CREDENTIALS = "docker-secrets"
-        DOCKER_USERNAME = "nyr24"
-        IMAGE_NAME = "${DOCKER_USERNAME}/node_project"
+        // AWS ECR Configuration
+        AWS_REGION = "us-east-1"                    // Change to your AWS region
+        AWS_ACCOUNT_ID = credentials('aws-account-id')  // Store in Jenkins secrets
+        ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        ECR_REPOSITORY_NAME = "node_project"
         IMAGE_TAG = "${BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
-        FULL_IMAGE_NAME = "${IMAGE_NAME}:${IMAGE_TAG}"
-        LATEST_IMAGE = "${IMAGE_NAME}:latest"
+        FULL_IMAGE_NAME = "${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:${IMAGE_TAG}"
+        LATEST_IMAGE = "${ECR_REGISTRY}/${ECR_REPOSITORY_NAME}:latest"
+        
+        // GitHub Configuration
         GITHUB_REPO = "Gityashu/node_project"
         GITHUB_URL = "https://github.com/${GITHUB_REPO}.git"
+        
+        // EKS Configuration
         KUBE_NAMESPACE = "sample"
         KUBE_DEPLOYMENT_NAME = "node-app"
         KUBE_CONFIG_CREDENTIALS = "kubeconfig"
+        AWS_CREDENTIALS = "aws-credentials"  // Jenkins AWS credential
     }
     
     stages {
@@ -35,10 +42,9 @@ pipeline {
         }
         
         stage('2. Build Application') {
-
             tools {
-        nodejs "nodejs"
-    }
+                nodejs "nodejs"
+            }
             steps {
                 echo "========== Building Node.js Application =========="
                 sh '''
@@ -72,36 +78,53 @@ pipeline {
                     docker build -t ${FULL_IMAGE_NAME} .
                     docker tag ${FULL_IMAGE_NAME} ${LATEST_IMAGE}
                     echo "✓ Docker image built successfully"
-                    docker images | grep ${IMAGE_NAME}
+                    docker images | grep ${ECR_REPOSITORY_NAME}
                 '''
             }
         }
         
-        stage('5. Push Docker Image to Registry') {
+        stage('5. Login to AWS ECR') {
             steps {
-                echo "========== Pushing Image to Docker Hub =========="
-                withDockerRegistry([credentialsId: "${DOCKER_REGISTRY_CREDENTIALS}", url: "https://${DOCKER_REGISTRY}"]) {
+                echo "========== Logging in to AWS ECR =========="
+                withCredentials([
+                    aws(credentialsId: "${AWS_CREDENTIALS}", 
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
                     sh '''
-                        echo "Pushing image: ${FULL_IMAGE_NAME}"
-                        docker push ${FULL_IMAGE_NAME}
-                        echo "Pushing image: ${LATEST_IMAGE}"
-                        docker push ${LATEST_IMAGE}
-                        echo "✓ Docker image pushed successfully"
+                        aws ecr get-login-password --region ${AWS_REGION} | \
+                        docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                        echo "✓ AWS ECR login successful"
                     '''
                 }
             }
         }
         
-        stage('5.5. Update K8s Manifests') {
-           steps {
-             sh '''
-              sed -i 's|nyr24/node_project:.*|nyr24/node_project:${IMAGE_TAG}|g' k8s-deployment.yaml
-              echo "✓ Updated image tag in k8s-deployment.yaml"
+        stage('6. Push Docker Image to ECR') {
+            steps {
+                echo "========== Pushing Image to AWS ECR =========="
+                sh '''
+                    echo "Pushing image: ${FULL_IMAGE_NAME}"
+                    docker push ${FULL_IMAGE_NAME}
+                    echo "Pushing image: ${LATEST_IMAGE}"
+                    docker push ${LATEST_IMAGE}
+                    echo "✓ Docker image pushed to ECR successfully"
                 '''
-    }
-}
-
-        stage('6. Deploy to EKS') {
+            }
+        }
+        
+        stage('7. Update K8s Manifests') {
+            steps {
+                echo "========== Updating K8s Manifests =========="
+                sh '''
+                    sed -i "s|image:.*|image: ${FULL_IMAGE_NAME}|g" k8s-deployment.yaml
+                    echo "✓ Updated image in k8s-deployment.yaml"
+                    cat k8s-deployment.yaml | grep image
+                '''
+            }
+        }
+        
+        stage('8. Deploy to EKS') {
             steps {
                 echo "========== Deploying to EKS Cluster =========="
                 withCredentials([file(credentialsId: "${KUBE_CONFIG_CREDENTIALS}", variable: 'KUBECONFIG_FILE')]) {
@@ -123,7 +146,7 @@ pipeline {
             }
         }
         
-        stage('7. Verify Deployment') {
+        stage('9. Verify Deployment') {
             steps {
                 echo "========== Verifying EKS Deployment =========="
                 withCredentials([file(credentialsId: "${KUBE_CONFIG_CREDENTIALS}", variable: 'KUBECONFIG_FILE')]) {
@@ -149,7 +172,7 @@ pipeline {
             cleanWs()
         }
         success {
-            echo "✓ Pipeline succeeded! Image deployed to EKS"
+            echo "✓ Pipeline succeeded! Image deployed to EKS from ECR"
         }
         failure {
             echo "✗ Pipeline failed! Check logs above for details"
