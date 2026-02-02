@@ -1,13 +1,37 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const { clientIPMiddleware, getClientIP } = require('./middleware/ipExtractor');
 
 const app = express();
 const port = 3000; // The port your Express app will listen on
 
+// Use IP extraction middleware (MUST be before other routes)
+app.use(clientIPMiddleware);
+
 // Use body-parser to parse URL-encoded bodies (for form data)
 app.use(bodyParser.urlencoded({ extended: true }));
-app.get('/health', (req, res) => res.status(200).json({status: 'ok'}));
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
+
+// Debug endpoint to test IP extraction
+app.get('/debug/client-ip', (req, res) => {
+    const xForwardedFor = req.headers['x-forwarded-for'] || '';
+    const xffChain = xForwardedFor ? xForwardedFor.split(',').map(ip => ip.trim()) : [];
+
+    res.json({
+        '1_RESULT_REAL_CLIENT_IP': req.clientIP,
+        '2_SOURCE_CONNECTION_IP': req.ip || req.connection.remoteAddress,
+        '3_HEADERS': {
+            'x_forwarded_for_chain': xffChain,
+            'cf_connecting_ip': req.headers['cf-connecting-ip'] || null,
+            'x_real_ip': req.headers['x-real-ip'] || null
+        },
+        '4_ENVIRONMENT_INFO': {
+            'node_env': process.env.NODE_ENV || 'development',
+            'port': port
+        }
+    });
+});
 
 // Set EJS as the view engine
 app.set('view engine', 'ejs');

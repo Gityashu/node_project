@@ -21,7 +21,7 @@ jobs:
     - name: Configure AWS OIDC Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/aws_eks_oidc_connectivity
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/OIDC-connectivity-role
         aws-region: us-east-1
 
     - name: Login to Docker Hub
@@ -32,15 +32,15 @@ jobs:
 
     - name: Build and Push Docker Image
       run: |
-        IMAGE="${{ secrets.DOCKER_USERNAME }}/todo-app:latest"
+        IMAGE="nyr24/testing:latest"
         docker build -t $IMAGE .
         docker push $IMAGE
 
     - name: Update kubeconfig
       run: |
-        aws eks update-kubeconfig --name my-eks-cluster --region us-east-1
+        aws eks update-kubeconfig --name innovation-dev --region us-east-1
 
     - name: Deploy to EKS
       run: |
-        kubectl apply -f todo-deployment.yaml
-        kubectl apply -f todo-service.yaml
+        kubectl apply -f k8s-deployment.yaml
+        kubectl apply -f node-app-ingress.yaml

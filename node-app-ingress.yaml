@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: node-app-ingress
+  namespace: sample
+  annotations:
+    # ALB Ingress Controller settings
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    # Preserve client IP headers with comprehensive settings
+    alb.ingress.kubernetes.io/load-balancer-attributes: |
+      routing.http.xff_header_processing.mode=append,
+      routing.http.xff_client_port.enabled=true,
+      routing.http.preserve_host_header.enabled=true,
+      routing.http.drop_invalid_header_fields.enabled=true
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: node-app-service
+                port:
+                  number: 80
