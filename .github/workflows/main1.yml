@@ -20,7 +20,7 @@ jobs:
     - name: Configure AWS OIDC Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/OIDC-connectivity-role
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/testing-oidc
         aws-region: us-east-1
 
     - name: Login to Docker Hub
